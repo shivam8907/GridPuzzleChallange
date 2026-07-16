@@ -1,6 +1,7 @@
 using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 namespace GridPuzzle.UI
 {
@@ -11,7 +12,7 @@ namespace GridPuzzle.UI
     [RequireComponent(typeof(RectTransform))]
     public class TileView : MonoBehaviour
     {
-        [SerializeField] private Text label;
+        [SerializeField] private TextMeshProUGUI label;
         [SerializeField] private float moveDuration = 0.12f;
 
         private RectTransform _rect;

@@ -936,7 +936,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GridPuzzle.UI.UIManager
   boardRoot: {fileID: 1077241746}
-  tilePrefab: {fileID: 0}
+  tilePrefab: {fileID: 2269253379768699206, guid: 650f3d1fdb626694f8c9e8ddbff45e80, type: 3}
   moveCounterText: {fileID: 1854157410}
   scoreText: {fileID: 652489780}
   comboText: {fileID: 1636649901}
