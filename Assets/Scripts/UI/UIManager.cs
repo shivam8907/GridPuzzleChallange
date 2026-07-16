@@ -1,12 +1,16 @@
+using GridPuzzle.Core;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using GridPuzzle.Core;
-using TMPro;
 
 namespace GridPuzzle.UI
 {
-   
+    /// <summary>
+    /// Sole owner of visual state. Never mutates GridModel — only reads from it
+    /// via the events/methods GameManager forwards. This keeps rendering
+    /// strictly one-way: Model -> View.
+    /// </summary>
     public class UIManager : MonoBehaviour, IGridObserver
     {
         [SerializeField] private RectTransform boardRoot;
@@ -15,11 +19,14 @@ namespace GridPuzzle.UI
         [SerializeField] private TextMeshProUGUI scoreText;
         [SerializeField] private TextMeshProUGUI comboText;
         [SerializeField] private TextMeshProUGUI undosLeftText;
+        [SerializeField] private TextMeshProUGUI peekUsesText;
         [SerializeField] private GameObject winPanel;
+        [SerializeField] private GameObject gameOverPanel;
         [SerializeField] private float cellSize = 150f;
 
         private readonly Dictionary<int, TileView> _tilesByValue = new Dictionary<int, TileView>();
         private int _width, _height;
+        private int _moveLimit;
 
         public void OnBoardReset(GridModel model)
         {
@@ -30,6 +37,7 @@ namespace GridPuzzle.UI
             _width = model.Width;
             _height = model.Height;
             winPanel.SetActive(false);
+            if (gameOverPanel) gameOverPanel.SetActive(false);
 
             for (int i = 0; i < _width * _height; i++)
             {
@@ -54,9 +62,27 @@ namespace GridPuzzle.UI
 
         public void OnSolved() => winPanel.SetActive(true);
 
-        public void UpdateHud(int moves, int score, int combo, int undosLeft)
+        public void OnGameOver()
         {
-            moveCounterText.text = $"Moves: {moves}";
+            if (gameOverPanel) gameOverPanel.SetActive(true);
+        }
+
+        public void SetMoveLimit(int limit) => _moveLimit = limit;
+
+        public void HighlightHintTile(int tileValue)
+        {
+            if (_tilesByValue.TryGetValue(tileValue, out var view))
+                view.PulseHint();
+        }
+
+        public void UpdatePeekUses(int remaining)
+        {
+            if (peekUsesText) peekUsesText.text = $"Peek: {remaining}";
+        }
+
+        public void UpdateHud(int moves, int score, int combo, int undosLeft, int moveLimit = 0)
+        {
+            moveCounterText.text = moveLimit > 0 ? $"Moves: {moves}/{moveLimit}" : $"Moves: {moves}";
             scoreText.text = $"Score: {score}";
             comboText.text = combo > 1 ? $"Combo x{combo}!" : "";
             undosLeftText.text = undosLeft == int.MaxValue ? "Undo: ∞" : $"Undo: {undosLeft}";

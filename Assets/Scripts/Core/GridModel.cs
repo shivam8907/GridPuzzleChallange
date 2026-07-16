@@ -125,9 +125,9 @@ namespace GridPuzzle.Core
             // Swiping "Up" pulls the tile BELOW the blank upward into it, etc.
             switch (dir)
             {
-                case Direction.Up:    ty = by + 1; break;
-                case Direction.Down:  ty = by - 1; break;
-                case Direction.Left:  tx = bx + 1; break;
+                case Direction.Up: ty = by + 1; break;
+                case Direction.Down: ty = by - 1; break;
+                case Direction.Left: tx = bx + 1; break;
                 case Direction.Right: tx = bx - 1; break;
             }
 
@@ -152,8 +152,12 @@ namespace GridPuzzle.Core
         /// <summary>Reverses a previously applied move. O(1), no snapshot needed.</summary>
         public void UndoMove(MoveRecord record)
         {
-            _cells[record.BlankIndexBefore] = record.MovedTileValue;
-            _cells[record.BlankIndexAfter] = 0;
+            // Reverse of TryMove: put the tile back where it originally sat
+            // (BlankIndexAfter), and restore the blank to its original slot
+            // (BlankIndexBefore). The forward move did the opposite assignment —
+            // mirroring it here (not repeating it) is what makes this an undo.
+            _cells[record.BlankIndexAfter] = record.MovedTileValue;
+            _cells[record.BlankIndexBefore] = 0;
             BlankIndex = record.BlankIndexBefore;
             MoveCount = Math.Max(0, MoveCount - 1);
         }
@@ -179,6 +183,70 @@ namespace GridPuzzle.Core
                 total += Math.Abs(cx - tx) + Math.Abs(cy - ty);
             }
             return total;
+        }
+
+        private int ManhattanDistanceOf(int value, int atIndex)
+        {
+            int targetIndex = value - 1;
+            var (cx, cy) = ToCoord(atIndex);
+            var (tx, ty) = ToCoord(targetIndex);
+            return Math.Abs(cx - tx) + Math.Abs(cy - ty);
+        }
+
+        /// <summary>
+        /// Pure, non-mutating preview of what a move WOULD do — no state change, no events fired.
+        /// Returns the change in that single tile's distance-to-solved (negative = improvement).
+        /// Used by the Peek power-up to suggest a move without touching real game state.
+        /// </summary>
+        public bool TryPreviewMove(Direction dir, out int resultingDistanceDelta, out int tileValue)
+        {
+            var (bx, by) = ToCoord(BlankIndex);
+            int tx = bx, ty = by;
+            switch (dir)
+            {
+                case Direction.Up: ty = by + 1; break;
+                case Direction.Down: ty = by - 1; break;
+                case Direction.Left: tx = bx + 1; break;
+                case Direction.Right: tx = bx - 1; break;
+            }
+
+            if (tx < 0 || tx >= Width || ty < 0 || ty >= Height)
+            {
+                resultingDistanceDelta = 0;
+                tileValue = 0;
+                return false;
+            }
+
+            int targetIndex = ToIndex(tx, ty);
+            tileValue = _cells[targetIndex];
+            int oldDist = ManhattanDistanceOf(tileValue, targetIndex);
+            int newDist = ManhattanDistanceOf(tileValue, BlankIndex);
+            resultingDistanceDelta = newDist - oldDist;
+            return true;
+        }
+
+        /// <summary>
+        /// Scans all legal moves and returns the one that most improves distance-to-solved.
+        /// Ties broken by enum order. Returns null only if somehow no move is legal (never happens on a valid board).
+        /// </summary>
+        public Direction? FindBestHintMove(out int tileValue)
+        {
+            Direction? best = null;
+            int bestDelta = int.MaxValue;
+            int bestValue = 0;
+
+            foreach (Direction dir in (Direction[])Enum.GetValues(typeof(Direction)))
+            {
+                if (TryPreviewMove(dir, out int delta, out int val) && delta < bestDelta)
+                {
+                    bestDelta = delta;
+                    best = dir;
+                    bestValue = val;
+                }
+            }
+
+            tileValue = bestValue;
+            return best;
         }
 
         public IReadOnlyList<int> Snapshot() => Array.AsReadOnly(_cells);
