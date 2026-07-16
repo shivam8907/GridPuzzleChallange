@@ -2,16 +2,7 @@ using GridPuzzle.Core;
 
 namespace GridPuzzle.Gameplay
 {
-    /// <summary>
-    /// CANDIDATE INITIATIVE FEATURE — "Momentum Combo Meter"
-    ///
-    /// Every move that reduces total Manhattan distance to the solved state
-    /// (i.e. a genuinely "good" move) extends a combo streak and awards
-    /// escalating points. A move that increases distance (a "wasted" move)
-    /// breaks the streak. This rewards efficient play without blocking
-    /// experimentation, and gives the score panel something dynamic to show
-    /// beyond a flat move counter.
-    /// </summary>
+   
     public class ComboScoreSystem
     {
         private readonly GridModel _grid;

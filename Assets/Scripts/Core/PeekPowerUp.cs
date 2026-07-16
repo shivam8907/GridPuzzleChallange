@@ -3,16 +3,7 @@ using GridPuzzle.Core;
 
 namespace GridPuzzle.Gameplay
 {
-    /// <summary>
-    /// CANDIDATE INITIATIVE FEATURE — "Peek" power-up.
-    ///
-    /// A limited-use hint: on activation, finds whichever legal move most
-    /// reduces total distance-to-solved (reusing GridModel.FindBestHintMove,
-    /// the same Manhattan-distance math ComboScoreSystem already relies on)
-    /// and tells the UI which tile to highlight. Does NOT move the tile itself —
-    /// the player still has to make the move — so it can't be spammed to
-    /// auto-solve the board, only to break decision paralysis.
-    /// </summary>
+   
     public class PeekPowerUp
     {
         private readonly GridModel _grid;

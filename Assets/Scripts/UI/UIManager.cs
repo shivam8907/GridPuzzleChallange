@@ -6,11 +6,7 @@ using UnityEngine.UI;
 
 namespace GridPuzzle.UI
 {
-    /// <summary>
-    /// Sole owner of visual state. Never mutates GridModel — only reads from it
-    /// via the events/methods GameManager forwards. This keeps rendering
-    /// strictly one-way: Model -> View.
-    /// </summary>
+   
     public class UIManager : MonoBehaviour, IGridObserver
     {
         [SerializeField] private RectTransform boardRoot;
@@ -23,10 +19,23 @@ namespace GridPuzzle.UI
         [SerializeField] private GameObject winPanel;
         [SerializeField] private GameObject gameOverPanel;
         [SerializeField] private float cellSize = 150f;
+        [SerializeField] private AudioClip tileSwipeClip;
+       
+        private AudioSource audioSource;
+      
+        [SerializeField] private Button undoButton;
+        [SerializeField] private Button peekButton;
 
         private readonly Dictionary<int, TileView> _tilesByValue = new Dictionary<int, TileView>();
         private int _width, _height;
         private int _moveLimit;
+        private void Awake()
+        {
+            audioSource = GetComponent<AudioSource>();
+
+            if (audioSource == null)
+                audioSource = gameObject.AddComponent<AudioSource>();
+        }
 
         public void OnBoardReset(GridModel model)
         {
@@ -57,6 +66,14 @@ namespace GridPuzzle.UI
             {
                 Vector2 target = IndexToPos(record.BlankIndexBefore); // moved INTO the old blank slot
                 view.SetGridPosition(target, cellSize, animate: true);
+            PlayTileSwipeSound();
+            }
+        }
+        private void PlayTileSwipeSound()
+        {
+            if (audioSource != null && tileSwipeClip != null)
+            {
+                audioSource.PlayOneShot(tileSwipeClip);
             }
         }
 
@@ -78,6 +95,7 @@ namespace GridPuzzle.UI
         public void UpdatePeekUses(int remaining)
         {
             if (peekUsesText) peekUsesText.text = $"Peek: {remaining}";
+            SetPeekButtonState(remaining > 0);
         }
 
         public void UpdateHud(int moves, int score, int combo, int undosLeft, int moveLimit = 0)
@@ -86,6 +104,7 @@ namespace GridPuzzle.UI
             scoreText.text = $"Score: {score}";
             comboText.text = combo > 1 ? $"Combo x{combo}!" : "";
             undosLeftText.text = undosLeft == int.MaxValue ? "Undo: ∞" : $"Undo: {undosLeft}";
+            SetUndoButtonState(undosLeft > 0 || undosLeft == int.MaxValue);
         }
 
         private Vector2 IndexToPos(int index)
@@ -100,5 +119,18 @@ namespace GridPuzzle.UI
 
             return new Vector2(offsetX + x * cellSize, offsetY - y * cellSize);
         }
+
+        public void SetUndoButtonState(bool enabled)
+        {
+            if (undoButton != null)
+                undoButton.interactable = enabled;
+        }
+
+        public void SetPeekButtonState(bool enabled)
+        {
+            if (peekButton != null)
+                peekButton.interactable = enabled;
+        }
+       
     }
 }

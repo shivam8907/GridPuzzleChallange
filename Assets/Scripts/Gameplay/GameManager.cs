@@ -1,26 +1,25 @@
-using UnityEngine;
 using GridPuzzle.Core;
 using GridPuzzle.InputSystem;
 using GridPuzzle.UI;
+using UnityEngine;
+using UnityEngine.Audio;
+using UnityEngine.UI;
 
 namespace GridPuzzle.Gameplay
 {
-    /// <summary>
-    /// Composition root. Owns no gameplay logic itself — only wires
-    /// GridModel (state) <-> SwipeInputController (input) <-> UIManager (render).
-    /// This is the ONLY class that knows about all three layers at once,
-    /// keeping the layers themselves mutually unaware of each other.
-    /// </summary>
+    
     public class GameManager : MonoBehaviour
     {
         [SerializeField] private int width = 4;
         [SerializeField] private int height = 4;
         [SerializeField] private int maxUndos = 3;
-        [Tooltip("0 = unlimited moves. >0 = player loses if board isn't solved within this many moves.")]
         [SerializeField] private int maxMoves = 0;
         [SerializeField] private int maxPeekUses = 2;
         [SerializeField] private SwipeInputController inputController;
         [SerializeField] private UIManager uiManager;
+        [SerializeField] private AudioClip undoClip;
+        [SerializeField] private AudioClip peekClip;
+        private AudioSource audioSource;
 
         private GridModel _grid;
         private HistoryManager _history;
@@ -61,6 +60,7 @@ namespace GridPuzzle.Gameplay
         {
             if (_roundOver) return;
             if (!_peek.TryUse()) return;
+            PlayPeekSound();
             uiManager.UpdatePeekUses(_peek.RemainingUses);
         }
 
@@ -85,6 +85,7 @@ namespace GridPuzzle.Gameplay
             if (_roundOver) return;
             if (_history.Undo())
                 uiManager.OnBoardReset(_grid); // simplest correct redraw after undo
+            PlayUndoSound();
             uiManager.UpdateHud(_grid.MoveCount, _combo.Score, _combo.ComboStreak, _history.RemainingUndos, maxMoves);
         }
 
@@ -92,6 +93,18 @@ namespace GridPuzzle.Gameplay
         {
             _roundOver = true;
             uiManager.OnSolved();
+        }
+
+        public void PlayUndoSound()
+        {
+            if (undoClip != null)
+                audioSource.PlayOneShot(undoClip);
+        }
+
+        public void PlayPeekSound()
+        {
+            if (peekClip != null)
+                audioSource.PlayOneShot(peekClip);
         }
 
         private void OnDestroy()
