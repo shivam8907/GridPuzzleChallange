@@ -66,7 +66,13 @@ namespace GridPuzzle.UI
         {
             int x = index % _width;
             int y = index / _width;
-            return new Vector2(x * cellSize, -y * cellSize);
+
+            // Offset so the whole grid is centered on BoardRoot's origin,
+            // instead of anchoring tile (0,0) directly on BoardRoot's center.
+            float offsetX = -(_width - 1) * cellSize * 0.5f;
+            float offsetY = (_height - 1) * cellSize * 0.5f;
+
+            return new Vector2(offsetX + x * cellSize, offsetY - y * cellSize);
         }
     }
 }
